@@ -620,22 +620,22 @@ const MONTHS_2027 = ['Jan 2027','Feb 2027','Mar 2027','Apr 2027','May 2027','Jun
 // Dashboard already has the correct month selected via its own dropdown (cell B3)
 // Row indices in the A1:D65 fetch:
 const CATEGORIES = [
-  { label: 'House',         row: 27 },
-  { label: 'Rates',         row: 28 },
-  { label: 'Groceries',     row: 29 },
-  { label: 'Alcohol',       row: 30 },
-  { label: 'Mortgage',      row: 31 },
-  { label: 'Social',        row: 32 },
-  { label: 'Eating out',    row: 33 },
-  { label: 'Utilities',     row: 34 },
-  { label: 'Car',           row: 35 },
-  { label: 'Insurance',     row: 36 },
-  { label: 'Subscriptions', row: 37 },
-  { label: 'Miscellaneous', row: 38 },
-  { label: 'Yoshi',         row: 39 },
-  { label: 'Holiday',       row: 40 },
-  { label: 'Baby',          row: 41 },
-  { label: 'TOTAL',         row: 42, isTotal: true },
+  { label: 'House',         row: 28 },
+  { label: 'Rates',         row: 29 },
+  { label: 'Groceries',     row: 30 },
+  { label: 'Alcohol',       row: 31 },
+  { label: 'Mortgage',      row: 32 },
+  { label: 'Social',        row: 33 },
+  { label: 'Eating out',    row: 34 },
+  { label: 'Utilities',     row: 35 },
+  { label: 'Car',           row: 36 },
+  { label: 'Insurance',     row: 37 },
+  { label: 'Subscriptions', row: 38 },
+  { label: 'Miscellaneous', row: 39 },
+  { label: 'Yoshi',         row: 40 },
+  { label: 'Holiday',       row: 41 },
+  { label: 'Baby',          row: 42 },
+  { label: 'TOTAL',         row: 43, isTotal: true },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -830,6 +830,7 @@ $('month-select').addEventListener('change', async () => {
   const month = $('month-select').value;
   showLoading('Updating month…');
   await updateDashboardMonth(month);
+  await new Promise(r => setTimeout(r, 1500));
   await loadData();
 });
 $('refresh-btn').addEventListener('click', loadData);
