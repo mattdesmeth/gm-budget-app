@@ -1005,16 +1005,19 @@ async function updateDashboardMonth(month) {
 
 function renderActuals(month) {
   const { dashboard } = allData;
-  // dashboard fetched from A1:D65.
-  // Row indices (0-based): categories at 28-42, TOTAL at 43
-
   const container = $('actuals-rows');
   container.innerHTML = '';
 
-  console.log('Dashboard rows 40-45:', dashboard.slice(40,46).map((r,i) => (i+40)+': '+JSON.stringify(r)));
+  // Find each row by matching col A label — immune to row index drift
   CATEGORIES.forEach(cat => {
-    const rowIndex = cat.isTotal ? 43 : cat.row;
-    const dashRow = dashboard[rowIndex] || [];
+    let dashRow;
+    if (cat.isTotal) {
+      // Two rows have label "TOTAL" — transfers (row 8) and expenses (last one)
+      const matches = dashboard.filter(r => r[0] === 'TOTAL');
+      dashRow = matches[matches.length - 1] || [];
+    } else {
+      dashRow = dashboard.find(r => r[0] === cat.label) || [];
+    }
     const f = (dashRow[1] !== undefined && dashRow[1] !== '') ? dashRow[1] : '—';
     const a = (dashRow[2] !== undefined && dashRow[2] !== '') ? dashRow[2] : '—';
     const v = (dashRow[3] !== undefined && dashRow[3] !== '') ? dashRow[3] : '—';
@@ -1031,10 +1034,9 @@ function renderActuals(month) {
     container.appendChild(el);
   });
 
-  // If month is 2027, note that actuals won't be in this range
   if (month.includes('2027')) {
     const note = document.createElement('div');
-    note.style.cssText = 'padding:10px 16px; font-size:12px; color:var(--muted); font-style:italic;';
+    note.style.cssText = 'padding:10px 16px;font-size:12px;color:var(--muted);font-style:italic;';
     note.textContent = 'Actuals for 2027 will appear as transactions are entered.';
     container.appendChild(note);
   }
