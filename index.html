@@ -965,26 +965,20 @@ function renderIncome(month) {
 
 // ── 3. BUDGET ────────────────────────────────────────────────
 function renderBudget(month) {
-  const { expenseSplit } = allData;
-  // Fetched A4:Y28. Row 0 = month headers (A4)
-  // Row 1  = "INPUTS" label
-  // Row 2  = Total shared expenses forecast  (A6 = sheet row 6)
-  // Row 5  = Ghislaine gross income share %  (A10 = sheet row 10 = index 6)
-  // Row 22 = Ghislaine contribution          (A26 = sheet row 26 = index 22)
-  // Row 24 = Ghislaine net after shared+pers (A28 = sheet row 28 = index 24... but range ends at 28 so index 24)
+  const { dashboard } = allData;
 
-  const header = expenseSplit[0] || [];
-  const col    = colIndexFor(month, header);
+  // Pull all values from Dashboard tab by matching col A label
+  const sharedRow  = dashboard.find(r => r[0] === 'Forecast shared expenses') || [];
+  const shareRow   = dashboard.find(r => r[0] === "Ghislaine's income share %") || [];
+  const totalRows  = dashboard.filter(r => r[0] === 'TOTAL');
+  const contribRow = totalRows[0] || [];  // First TOTAL = transfers = Ghislaine's contribution (B9)
+  const netRow     = dashboard.find(r => r[0] === 'Ghislaine net after shared + personal') || [];
 
-  const totalShared  = col >= 0 ? getCell(expenseSplit, 2,  col) : '—';
-  const sharePct     = col >= 0 ? getCell(expenseSplit, 6,  col) : '—';
-  const gContrib     = col >= 0 ? getCell(expenseSplit, 22, col) : '—';
-  const gNet         = col >= 0 ? getCell(expenseSplit, 24, col) : '—';
+  $('bud-total').textContent     = fmtAmt(sharedRow[1] || '—');
+  $('bud-share-pct').textContent = shareRow[2] || '—';
+  $('bud-g-share').textContent   = fmtAmt(contribRow[1] || '—');
 
-  $('bud-total').textContent     = fmtAmt(totalShared);
-  $('bud-share-pct').textContent = sharePct !== '—' ? sharePct : '—';
-  $('bud-g-share').textContent   = fmtAmt(gContrib);
-
+  const gNet = netRow[2] || '—';
   const netEl = $('bud-net');
   netEl.textContent = fmtAmt(gNet);
   const netN = parseAmt(gNet);
