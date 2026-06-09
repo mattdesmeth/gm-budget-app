@@ -1005,27 +1005,29 @@ async function updateDashboardMonth(month) {
 function renderActuals(month) {
   const { dashboard } = allData;
   // dashboard fetched from A1:D65.
-  // Rows 28-42 = categories, row 43 = TOTAL (0-indexed)
+  // Row indices (0-based): categories at 28-42, TOTAL at 43
 
   const container = $('actuals-rows');
   container.innerHTML = '';
 
+  console.log('Dashboard rows 40-45:', dashboard.slice(40,46).map((r,i) => (i+40)+': '+JSON.stringify(r)));
   CATEGORIES.forEach(cat => {
-    const row = dashboard[cat.row] || [];
-    const f = row[1] || '—';
-    const a = row[2] || '—';
-    const v = row[3] || '—';
+    const rowIndex = cat.isTotal ? 43 : cat.row;
+    const dashRow = dashboard[rowIndex] || [];
+    const f = (dashRow[1] !== undefined && dashRow[1] !== '') ? dashRow[1] : '—';
+    const a = (dashRow[2] !== undefined && dashRow[2] !== '') ? dashRow[2] : '—';
+    const v = (dashRow[3] !== undefined && dashRow[3] !== '') ? dashRow[3] : '—';
 
-    const row = document.createElement('div');
-    row.className = 'data-row' + (cat.isTotal ? ' total' : '');
-    row.innerHTML = `
-      <span class="row-label${cat.isTotal ? '' : ''}">${cat.label}</span>
+    const el = document.createElement('div');
+    el.className = 'data-row' + (cat.isTotal ? ' total' : '');
+    el.innerHTML = `
+      <span class="row-label">${cat.label}</span>
       <div class="row-values">
         <span class="val forecast">${fmtAmt(f)}</span>
         <span class="val actual">${fmtAmt(a)}</span>
         <span class="val ${varianceClass(v)}">${fmtAmt(v)}</span>
       </div>`;
-    container.appendChild(row);
+    container.appendChild(el);
   });
 
   // If month is 2027, note that actuals won't be in this range
