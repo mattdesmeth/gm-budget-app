@@ -303,3 +303,551 @@
       font-size: 15px;
       font-weight: 500;
       cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    #google-signin-btn:active { transform: scale(0.97); }
+
+    .google-logo { width: 20px; height: 20px; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--surface2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    #loading-screen p { font-size: 14px; color: var(--muted); }
+
+    .error-msg {
+      background: rgba(249,122,122,0.1);
+      border: 1px solid rgba(249,122,122,0.25);
+      color: var(--danger);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 300px;
+    }
+
+    .col-header-row {
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px 16px 4px;
+      gap: 16px;
+    }
+
+    .hidden { display: none !important; }
+
+    .sheet-link {
+      display: block;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--accent2);
+      text-decoration: none;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div id="login-screen">
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <rect width="48" height="48" rx="12" fill="#1f2436"/>
+    <path d="M14 28l6-8 5 6 4-5 5 7" stroke="#c8f09a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="34" cy="16" r="3" fill="#7eb8f7"/>
+  </svg>
+  <h2>G&amp;M<br/>Budget</h2>
+  <p>Sign in with your Google account to view your household budget dashboard.</p>
+  <button id="google-signin-btn">
+    <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+    Sign in with Google
+  </button>
+  <div id="login-error" class="error-msg hidden"></div>
+</div>
+
+<div id="loading-screen" class="hidden">
+  <div class="spinner"></div>
+  <p id="loading-msg">Loading your dashboard…</p>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="header-left">
+      <h1>G&amp;M Budget</h1>
+      <p id="user-email"></p>
+    </div>
+    <button id="sign-out-btn">Sign out</button>
+  </header>
+
+  <div class="month-bar">
+    <label for="month-select">Month</label>
+    <select id="month-select">
+      <option>Jan 2026</option><option>Feb 2026</option><option>Mar 2026</option>
+      <option>Apr 2026</option><option selected>May 2026</option><option>Jun 2026</option>
+      <option>Jul 2026</option><option>Aug 2026</option><option>Sep 2026</option>
+      <option>Oct 2026</option><option>Nov 2026</option><option>Dec 2026</option>
+      <option>Jan 2027</option><option>Feb 2027</option><option>Mar 2027</option>
+      <option>Apr 2027</option><option>May 2027</option><option>Jun 2027</option>
+      <option>Jul 2027</option><option>Aug 2027</option><option>Sep 2027</option>
+      <option>Oct 2027</option><option>Nov 2027</option><option>Dec 2027</option>
+    </select>
+    <button id="refresh-btn" title="Refresh data">↻</button>
+  </div>
+
+  <main>
+    <div class="card" id="card-transfer">
+      <div class="card-header">
+        <span class="card-title">1 · How much to transfer</span>
+        <span class="card-hint">Expected amounts</span>
+      </div>
+      <div class="transfer-grid">
+        <div class="transfer-cell">
+          <span class="t-label">Citibank CC (BPAY)</span>
+          <span class="t-amount" id="t-cc">—</span>
+          <span class="t-sub">Credit card</span>
+        </div>
+        <div class="transfer-cell">
+          <span class="t-label">St George</span>
+          <span class="t-amount" id="t-sg">—</span>
+          <span class="t-sub">Mortgage</span>
+        </div>
+        <div class="transfer-cell full">
+          <div>
+            <div class="t-label">Total expected</div>
+            <div style="font-size:18px;font-weight:600;color:var(--text);margin-top:2px;" id="t-total">—</div>
+          </div>
+          <div style="text-align:right">
+            <div class="t-label">Actually transferred</div>
+            <div style="font-size:18px;font-weight:600;margin-top:2px;" id="t-actual">—</div>
+          </div>
+        </div>
+      </div>
+      <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1rdoBJhQVHNTTqMAgowcjLiNwelU-_GF3ndqaTKijj2Y" target="_blank">→ Record transfers in the Transfers tab</a>
+    </div>
+
+    <div class="card" id="card-income">
+      <div class="card-header">
+        <span class="card-title">2 · Income</span>
+        <span class="card-hint">Forecast vs actual</span>
+      </div>
+      <div class="col-header-row">
+        <span class="val-col-header">Forecast</span>
+        <span class="val-col-header">Actual</span>
+      </div>
+      <div class="data-row">
+        <span class="row-label">Casual Work</span>
+        <div class="row-values">
+          <span class="val forecast" id="inc-work-f">—</span>
+          <span class="val actual" id="inc-work-a">—</span>
+        </div>
+      </div>
+      <div class="data-row">
+        <span class="row-label">Maternity payments</span>
+        <div class="row-values">
+          <span class="val forecast" id="inc-mat-f">—</span>
+          <span class="val actual" id="inc-mat-a">—</span>
+        </div>
+      </div>
+      <div class="data-row">
+        <span class="row-label">Frans Money</span>
+        <div class="row-values">
+          <span class="val forecast" id="inc-frans-f">—</span>
+          <span class="val actual" id="inc-frans-a">—</span>
+        </div>
+      </div>
+      <p class="income-note">Enter actual income in the <strong>INPUT – Income Actual</strong> tab (green rows).</p>
+      <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1rdoBJhQVHNTTqMAgowcjLiNwelU-_GF3ndqaTKijj2Y" target="_blank">→ Open Income Actual tab</a>
+    </div>
+
+    <div class="card" id="card-budget">
+      <div class="card-header">
+        <span class="card-title">3 · Budget this month</span>
+        <span class="card-hint">Ghislaine's share</span>
+      </div>
+      <div class="highlight-row">
+        <span class="hl-label">Total household expenses (forecast)</span>
+        <span class="hl-value accent2" id="bud-total">—</span>
+      </div>
+      <div class="highlight-row">
+        <span class="hl-label">Ghislaine's income share</span>
+        <span class="hl-value" id="bud-share-pct">—</span>
+      </div>
+      <div class="highlight-row">
+        <span class="hl-label">Ghislaine's contribution (forecast)</span>
+        <span class="hl-value accent" id="bud-g-share">—</span>
+      </div>
+      <div class="highlight-row">
+        <span class="hl-label">Net after shared + personal</span>
+        <span class="hl-value" id="bud-net">—</span>
+      </div>
+      <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1rdoBJhQVHNTTqMAgowcjLiNwelU-_GF3ndqaTKijj2Y" target="_blank">→ Full breakdown in Expense Split tab</a>
+    </div>
+
+    <div class="card" id="card-actuals">
+      <div class="card-header">
+        <span class="card-title">4 · Actual vs forecast</span>
+        <span class="card-hint">+ under, − over</span>
+      </div>
+      <div class="col-header-row">
+        <span class="val-col-header">Forecast</span>
+        <span class="val-col-header">Actual</span>
+        <span class="val-col-header">Variance</span>
+      </div>
+      <div id="actuals-rows"></div>
+      <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1rdoBJhQVHNTTqMAgowcjLiNwelU-_GF3ndqaTKijj2Y" target="_blank">→ See full detail in Spend by Category tab</a>
+    </div>
+  </main>
+</div>
+
+<script>
+const CONFIG = {
+  CLIENT_ID:      '635181951083-vlio8uavl5pojsb0nqla3kh7rbkcv4ba.apps.googleusercontent.com',
+  SPREADSHEET_ID: '1rdoBJhQVHNTTqMAgowcjLiNwelU-_GF3ndqaTKijj2Y',
+  SCOPES:         'https://www.googleapis.com/auth/spreadsheets email profile',
+  REDIRECT_URI:   'https://mattdesmeth.github.io/gm-budget-app/'
+};
+
+let accessToken = null;
+let allData = {};
+
+const CATEGORIES = [
+  { label: 'House',         row: 28 },
+  { label: 'Rates',         row: 29 },
+  { label: 'Groceries',     row: 30 },
+  { label: 'Alcohol',       row: 31 },
+  { label: 'Mortgage',      row: 32 },
+  { label: 'Social',        row: 33 },
+  { label: 'Eating out',    row: 34 },
+  { label: 'Utilities',     row: 35 },
+  { label: 'Car',           row: 36 },
+  { label: 'Insurance',     row: 37 },
+  { label: 'Subscriptions', row: 38 },
+  { label: 'Miscellaneous', row: 39 },
+  { label: 'Yoshi',         row: 40 },
+  { label: 'Holiday',       row: 41 },
+  { label: 'Baby',          row: 42 },
+  { label: 'TOTAL',         row: 43, isTotal: true },
+];
+
+const $ = id => document.getElementById(id);
+const loginScreen   = $('login-screen');
+const loadingScreen = $('loading-screen');
+const appEl         = $('app');
+const loginError    = $('login-error');
+const loadingMsg    = $('loading-msg');
+
+function generateState() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function buildAuthURL() {
+  const state = generateState();
+  sessionStorage.setItem('oauth_state', state);
+  const params = new URLSearchParams({
+    client_id:     CONFIG.CLIENT_ID,
+    redirect_uri:  CONFIG.REDIRECT_URI,
+    response_type: 'token',
+    scope:         CONFIG.SCOPES,
+    state:         state,
+    include_granted_scopes: 'true'
+  });
+  return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+function parseHashToken() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  const token     = params.get('access_token');
+  const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
+  const state     = params.get('state');
+  if (!token) return null;
+  if (state && sessionStorage.getItem('oauth_state') && state !== sessionStorage.getItem('oauth_state')) return null;
+  history.replaceState(null, '', '/gm-budget-app/');
+  return { token, expiry: Date.now() + (expiresIn - 60) * 1000 };
+}
+
+function initAuth() {
+  const fromRedirect = parseHashToken();
+  if (fromRedirect) {
+    showLoading('Signing in…');
+    accessToken = fromRedirect.token;
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    }).then(r => r.json()).then(info => {
+      const email = info.email || '';
+      $('user-email').textContent = email;
+      sessionStorage.setItem('gm_token', JSON.stringify({ token: accessToken, expiry: fromRedirect.expiry, email }));
+      showApp();
+    }).catch(() => showApp());
+    return;
+  }
+  const saved = sessionStorage.getItem('gm_token');
+  if (saved) {
+    try {
+      const { token, expiry, email } = JSON.parse(saved);
+      if (Date.now() < expiry) {
+        accessToken = token;
+        $('user-email').textContent = email;
+        showApp();
+        return;
+      }
+    } catch {}
+  }
+  showLogin();
+}
+
+function showLogin() {
+  loginScreen.classList.remove('hidden');
+  loadingScreen.classList.add('hidden');
+  appEl.classList.add('hidden');
+}
+
+function showLoading(msg = 'Loading your dashboard…') {
+  loadingMsg.textContent = msg;
+  loadingScreen.classList.remove('hidden');
+  loginScreen.classList.add('hidden');
+  appEl.classList.add('hidden');
+}
+
+function showApp() {
+  appEl.classList.remove('hidden');
+  loginScreen.classList.add('hidden');
+  loadingScreen.classList.add('hidden');
+  loadData();
+}
+
+$('google-signin-btn').addEventListener('click', () => {
+  loginError.classList.add('hidden');
+  window.location.href = buildAuthURL();
+});
+
+$('sign-out-btn').addEventListener('click', () => {
+  sessionStorage.removeItem('gm_token');
+  sessionStorage.removeItem('oauth_state');
+  accessToken = null;
+  allData = {};
+  showLogin();
+});
+
+async function updateDashboardMonth(month) {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent('Ghislaine Dashboard!B3')}?valueInputOption=USER_ENTERED`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [[month]] })
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        sessionStorage.removeItem('gm_token');
+        showLogin();
+        loginError.textContent = 'Session expired. Please sign in again.';
+        loginError.classList.remove('hidden');
+        throw new Error('Token expired');
+      }
+      console.warn('Dashboard month write failed:', res.status);
+    }
+  } catch(e) {
+    if (e.message === 'Token expired') throw e;
+    console.warn('updateDashboardMonth error (non-fatal):', e);
+  }
+}
+
+async function loadData() {
+  const refreshBtn = $('refresh-btn');
+  refreshBtn.classList.add('spinning');
+  showLoading('Fetching spreadsheet data…');
+  try {
+    const ranges = [
+      'Transfers!A3:O9',
+      'INPUT - Income Forecast!A13:AB17',
+      'INPUT - Income Actual!B1:M7',
+      'OUTPUT - Spend by Category!A4:O58',
+      'OUTPUT - Expense Split!A4:Y28',
+      'Ghislaine Dashboard!A1:D65',
+    ].map(r => `ranges=${encodeURIComponent(r)}`).join('&');
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values:batchGet?${ranges}&valueRenderOption=FORMATTED_VALUE`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const json = await res.json();
+
+    allData = {
+      transfers:      json.valueRanges[0].values || [],
+      incomeForecast: json.valueRanges[1].values || [],
+      incomeActual:   json.valueRanges[2].values || [],
+      spendByCategory: json.valueRanges[3].values || [],
+      expenseSplit:   json.valueRanges[4].values || [],
+      dashboard:      json.valueRanges[5].values || [],
+    };
+
+    appEl.classList.remove('hidden');
+    loadingScreen.classList.add('hidden');
+    renderDashboard();
+
+  } catch (err) {
+    loadingScreen.classList.add('hidden');
+    if (err.message === 'Token expired') return;
+    appEl.classList.remove('hidden');
+    console.error(err);
+    $('t-cc').textContent = 'Error: ' + (err.message || 'loading data');
+  } finally {
+    refreshBtn.classList.remove('spinning');
+  }
+}
+
+$('month-select').addEventListener('change', async () => {
+  const month = $('month-select').value;
+  showLoading('Updating month…');
+  await updateDashboardMonth(month);
+  await new Promise(r => setTimeout(r, 1500));
+  await loadData();
+});
+
+$('refresh-btn').addEventListener('click', loadData);
+
+function renderDashboard() {
+  if (!allData.transfers) return;
+  const month = $('month-select').value;
+  renderTransfers(month);
+  renderIncome(month);
+  renderBudget(month);
+  renderActuals(month);
+}
+
+function colIndexFor(month, headerRow) {
+  return headerRow.findIndex(h => h && h.trim() === month);
+}
+
+function getCell(grid, rowIndex, colIndex) {
+  if (!grid || !grid[rowIndex]) return '—';
+  const val = grid[rowIndex][colIndex];
+  return (val === undefined || val === null || val === '') ? '—' : val;
+}
+
+function parseAmt(str) {
+  if (!str || str === '—') return null;
+  const cleaned = str.replace(/[$,]/g, '').replace(/\((.+)\)/, '-$1');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? null : n;
+}
+
+function fmtAmt(str) {
+  if (!str || str === '—') return '—';
+  return str;
+}
+
+function varianceClass(str) {
+  const n = parseAmt(str);
+  if (n === null) return 'neutral';
+  return n > 0 ? 'under' : n < 0 ? 'over' : 'neutral';
+}
+
+function renderTransfers(month) {
+  const { transfers } = allData;
+  if (!transfers.length) return;
+  const col = colIndexFor(month, transfers[0]);
+  $('t-cc').textContent    = fmtAmt(col >= 0 ? getCell(transfers, 2, col) : '—');
+  $('t-sg').textContent    = fmtAmt(col >= 0 ? getCell(transfers, 4, col) : '—');
+  $('t-total').textContent = fmtAmt(col >= 0 ? getCell(transfers, 1, col) : '—');
+  const ccA = parseAmt(col >= 0 ? getCell(transfers, 3, col) : '—');
+  const sgA = parseAmt(col >= 0 ? getCell(transfers, 5, col) : '—');
+  if (ccA !== null && sgA !== null) {
+    const total = ccA + sgA;
+    const fmt = total < 0
+      ? `($${Math.abs(total).toLocaleString('en-AU', {minimumFractionDigits:2,maximumFractionDigits:2})})`
+      : `$${total.toLocaleString('en-AU', {minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    $('t-actual').textContent = fmt;
+    const expN = parseAmt($('t-total').textContent);
+    $('t-actual').style.color = (expN !== null && total - expN < -5) ? 'var(--danger)' : 'var(--accent)';
+  } else {
+    $('t-actual').textContent = '—';
+    $('t-actual').style.color = 'var(--muted)';
+  }
+}
+
+function renderIncome(month) {
+  const { incomeForecast, incomeActual } = allData;
+  const fCol = colIndexFor(month, incomeForecast[0] || []);
+  const aCol = colIndexFor(month, incomeActual[0] || []);
+  $('inc-work-f').textContent  = fmtAmt(fCol >= 0 ? getCell(incomeForecast, 2, fCol) : '—');
+  $('inc-mat-f').textContent   = fmtAmt(fCol >= 0 ? getCell(incomeForecast, 3, fCol) : '—');
+  $('inc-frans-f').textContent = fmtAmt(fCol >= 0 ? getCell(incomeForecast, 4, fCol) : '—');
+  $('inc-work-a').textContent  = fmtAmt(aCol >= 0 ? getCell(incomeActual, 2, aCol) : '—');
+  $('inc-mat-a').textContent   = fmtAmt(aCol >= 0 ? getCell(incomeActual, 3, aCol) : '—');
+  $('inc-frans-a').textContent = fmtAmt(aCol >= 0 ? getCell(incomeActual, 4, aCol) : '—');
+}
+
+function renderBudget(month) {
+  const { dashboard } = allData;
+  const sharedRow  = dashboard.find(r => r[0] === 'Forecast shared expenses') || [];
+  const shareRow   = dashboard.find(r => r[0] === "Ghislaine's income share %") || [];
+  const totalRows  = dashboard.filter(r => r[0] === 'TOTAL');
+  const contribRow = totalRows[0] || [];
+  const netRow     = dashboard.find(r => r[0] === 'Ghislaine net after shared + personal') || [];
+  $('bud-total').textContent     = fmtAmt(sharedRow[1] || '—');
+  $('bud-share-pct').textContent = shareRow[2] || '—';
+  $('bud-g-share').textContent   = fmtAmt(contribRow[1] || '—');
+  const gNet = netRow[2] || '—';
+  const netEl = $('bud-net');
+  netEl.textContent = fmtAmt(gNet);
+  const netN = parseAmt(gNet);
+  netEl.className = 'hl-value ' + (netN === null ? '' : netN >= 0 ? 'accent' : 'danger');
+}
+
+function renderActuals(month) {
+  const { dashboard } = allData;
+  const container = $('actuals-rows');
+  container.innerHTML = '';
+
+  CATEGORIES.forEach(cat => {
+    let dashRow;
+    if (cat.isTotal) {
+      const matches = dashboard.filter(r => r[0] === 'TOTAL');
+      dashRow = matches[matches.length - 1] || [];
+    } else {
+      dashRow = dashboard.find(r => r[0] === cat.label) || [];
+    }
+    const f = (dashRow[1] !== undefined && dashRow[1] !== '') ? dashRow[1] : '—';
+    const a = (dashRow[2] !== undefined && dashRow[2] !== '') ? dashRow[2] : '—';
+    const v = (dashRow[3] !== undefined && dashRow[3] !== '') ? dashRow[3] : '—';
+    const el = document.createElement('div');
+    el.className = 'data-row' + (cat.isTotal ? ' total' : '');
+    el.innerHTML = `
+      <span class="row-label">${cat.label}</span>
+      <div class="row-values">
+        <span class="val forecast">${fmtAmt(f)}</span>
+        <span class="val actual">${fmtAmt(a)}</span>
+        <span class="val ${varianceClass(v)}">${fmtAmt(v)}</span>
+      </div>`;
+    container.appendChild(el);
+  });
+
+  if (month.includes('2027')) {
+    const note = document.createElement('div');
+    note.style.cssText = 'padding:10px 16px;font-size:12px;color:var(--muted);font-style:italic;';
+    note.textContent = 'Actuals for 2027 will appear as transactions are entered.';
+    container.appendChild(note);
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+  caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+}
+
+window.addEventListener('load', initAuth);
+</script>
+</body>
+</html>
