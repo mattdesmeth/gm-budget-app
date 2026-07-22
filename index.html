@@ -675,7 +675,7 @@ async function loadData() {
       'INPUT - Income Actual!B1:M7',
       'OUTPUT - Spend by Category!A4:O58',
       'OUTPUT - Expense Split!A4:Y28',
-      'Ghislaine Dashboard!A1:D65',
+      'Ghislaine Dashboard!A3:D65',
     ].map(r => `ranges=${encodeURIComponent(r)}`).join('&');
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values:batchGet?${ranges}&valueRenderOption=FORMATTED_VALUE`;
