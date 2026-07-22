@@ -812,16 +812,13 @@ async function loadData() {
     loadingScreen.classList.add('hidden');
     renderDashboard();
 
-  } catch (err) {
+} catch (err) {
     loadingScreen.classList.add('hidden');
+    if (err.message === 'Token expired') return;
     appEl.classList.remove('hidden');
     console.error(err);
-    // Show error in first card
-    $('t-cc').textContent = 'Error loading data';
+    $('t-cc').textContent = 'Error: ' + (err.message || 'loading data');
   } finally {
-    refreshBtn.classList.remove('spinning');
-  }
-}
 
 // ─────────────────────────────────────────────────────────────
 // MONTH CHANGE
@@ -987,14 +984,27 @@ function renderBudget(month) {
 
 // ── 4. ACTUALS ───────────────────────────────────────────────
 async function updateDashboardMonth(month) {
-  // Write the selected month into the Dashboard tab cell B3
-  // so all its formulas recalculate for the right month
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent("Ghislaine Dashboard!B3")}?valueInputOption=USER_ENTERED`;
-  await fetch(url, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values: [[month]] })
-  });
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent('Ghislaine Dashboard!B3')}?valueInputOption=USER_ENTERED`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [[month]] })
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        sessionStorage.removeItem('gm_token');
+        showLogin();
+        loginError.textContent = 'Session expired. Please sign in again.';
+        loginError.classList.remove('hidden');
+        throw new Error('Token expired');
+      }
+      console.warn('Dashboard month write failed:', res.status);
+    }
+  } catch(e) {
+    if (e.message === 'Token expired') throw e;
+    console.warn('updateDashboardMonth error (non-fatal):', e);
+  }
 }
 
 function renderActuals(month) {
