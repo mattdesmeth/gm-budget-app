@@ -751,7 +751,7 @@ function fmtAmt(str) {
 function varianceClass(str) {
   const n = parseAmt(str);
   if (n === null) return 'neutral';
-  return n > 0 ? 'under' : n < 0 ? 'over' : 'neutral';
+  return n > 0 ? 'over' : n < 0 ? 'under' : 'neutral';
 }
 
 function renderTransfers(month) {
